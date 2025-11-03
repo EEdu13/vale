@@ -516,6 +516,10 @@
             margin-bottom: 24px;
         }
 
+        .is-hidden {
+            display: none !important;
+        }
+
         .form-group label {
             display: block;
             margin-bottom: 10px;
@@ -538,14 +542,10 @@
 
         .form-group select {
             cursor: pointer;
-        }
-
-        .form-group select option {
-            padding: 14px;
-            font-size: 20px;
-            line-height: 2.2;
+            appearance: auto;
+            -webkit-appearance: menulist;
+            -moz-appearance: menulist;
             background: white;
-            color: var(--text-primary);
         }
 
         .form-group input:focus,
@@ -1044,15 +1044,25 @@
         <div class="menu-container" id="mainMenu">
             <div class="section-title">📋 Apontamentos</div>
             <div class="menu-grid">
-                <div class="menu-card" onclick="showAvulsoForm()">
-                    <div class="menu-card-icon">⚡</div>
-                    <div class="menu-card-title">Avulso</div>
-                    <div class="menu-card-description">Registre apontamentos avulsos rapidamente</div>
+                <div class="menu-card" onclick="showManualForm()">
+                    <div class="menu-card-icon">👷</div>
+                    <div class="menu-card-title">Operação Manual</div>
+                    <div class="menu-card-description">Registro de atividades manuais</div>
                 </div>
-                <div class="menu-card" onclick="showPlaneadoForm()">
-                    <div class="menu-card-icon">📊</div>
-                    <div class="menu-card-title">Planejado</div>
-                    <div class="menu-card-description">Apontamentos com dados pré-preenchidos</div>
+                <div class="menu-card" onclick="showMecanizadaForm()">
+                    <div class="menu-card-icon">🚜</div>
+                    <div class="menu-card-title">Operação Mecanizada</div>
+                    <div class="menu-card-description">Registro de atividades com máquinas</div>
+                </div>
+                <div class="menu-card" onclick="showPlaneadoManualForm()">
+                    <div class="menu-card-icon">👤</div>
+                    <div class="menu-card-title">Planejado Manual</div>
+                    <div class="menu-card-description">OS com trabalho manual</div>
+                </div>
+                <div class="menu-card" onclick="showPlaneadoMecanizadoForm()">
+                    <div class="menu-card-icon">🚜</div>
+                    <div class="menu-card-title">Planejado Mecanizado</div>
+                    <div class="menu-card-description">OS com máquinas</div>
                 </div>
                 <div class="menu-card" onclick="showRelatorio()">
                     <div class="menu-card-icon">📈</div>
@@ -1279,6 +1289,436 @@
                             <input type="file" id="avulso_anexos" multiple accept="image/*,.pdf" style="display: none;">
                         </div>
                         <div id="avulso_files_preview"></div>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn">💾 Salvar Apontamento</button>
+            </form>
+        </div>
+
+        <!-- Operação Manual Form -->
+        <div class="form-container" id="manualForm">
+            <div class="form-header">
+                <div class="form-title">👷 Operação Manual</div>
+                <button class="back-btn" onclick="showMainMenu()">← Voltar</button>
+            </div>
+
+            <form id="manualFormData">
+                <div class="form-card">
+                    <div class="form-section-title">📅 Informações Gerais</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="manual_data">Data *</label>
+                            <input type="date" id="manual_data" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="manual_status">Status *</label>
+                            <select id="manual_status" required>
+                                <option value="">Selecione...</option>
+                                <option value="Em Andamento">Em Andamento</option>
+                                <option value="Finalizado Parcial">Finalizado Parcial</option>
+                                <option value="Finalizado Total">Finalizado Total</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="manual_servico">Serviço *</label>
+                            <select id="manual_servico" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="manual_codigo">Código</label>
+                            <input type="text" id="manual_codigo" placeholder="Código do serviço">
+                        </div>
+                        <div class="form-group">
+                            <label for="manual_qtd_colaboradores">Quantidade de Colaboradores *</label>
+                            <input type="number" id="manual_qtd_colaboradores" min="1" placeholder="Ex: 5" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <div class="form-section-title">🗺️ Localização</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="manual_fazenda">Fazenda *</label>
+                            <select id="manual_fazenda" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="manual_talhao">Talhão *</label>
+                            <select id="manual_talhao" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="manual_produzido">Produzido *</label>
+                            <input type="number" id="manual_produzido" step="0.01" placeholder="0.00" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="manual_area_total">Área Total (ha)</label>
+                            <input type="number" id="manual_area_total" step="0.01" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="manual_restante">Restante (ha)</label>
+                            <input type="number" id="manual_restante" step="0.01" readonly>
+                        </div>
+                    </div>
+                    
+                    <div id="estouro_alerta_manual" style="display: none; background: #ff0000; color: white; padding: 15px; border-radius: 10px; text-align: center; font-weight: bold; font-size: 18px; margin-top: 20px; animation: pulse-red 1s infinite; box-shadow: 0 0 20px rgba(255,0,0,0.5);">
+                        ⚠️ ESTOURO DE TALHÃO ⚠️
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <div class="form-section-title">⏰ Horários</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="manual_hora_inicio">Hora Início *</label>
+                            <input type="time" id="manual_hora_inicio" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="manual_hora_final">Hora Final *</label>
+                            <input type="time" id="manual_hora_final" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <div class="form-section-title">
+                        🛑 Paradas
+                        <button type="button" class="add-parada-btn" onclick="addParadaFieldManual()" style="float: right;">
+                            ➕ Adicionar Parada
+                        </button>
+                    </div>
+                    <div id="paradas_container_manual">
+                        <div class="parada-row" data-index="1">
+                            <div class="form-group">
+                                <label for="manual_parada_motivo1">Motivo da Parada</label>
+                                <select id="manual_parada_motivo1">
+                                    <option value="">Selecione...</option>
+                                    <option value="Refeição">Refeição</option>
+                                    <option value="Manutenção">Manutenção</option>
+                                    <option value="Abastecimento">Abastecimento</option>
+                                    <option value="Chuva">Chuva</option>
+                                    <option value="Quebra">Quebra</option>
+                                    <option value="Falta de Insumo">Falta de Insumo</option>
+                                    <option value="Outros">Outros</option>
+                                </select>
+                            </div>
+                            <div class="form-grid" style="grid-template-columns: 1fr 1fr auto; align-items: end; margin-top: 10px;">
+                                <div class="form-group">
+                                    <label for="manual_parada_inicio1">Hora Início</label>
+                                    <input type="time" id="manual_parada_inicio1">
+                                </div>
+                                <div class="form-group">
+                                    <label for="manual_parada_fim1">Hora Fim</label>
+                                    <input type="time" id="manual_parada_fim1">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <button type="button" class="remove-parada-btn" onclick="removeParadaFieldManual(1)" style="display: none;">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-card" id="manual_plantio_section" style="display: none;">
+                    <div class="form-section-title">🌱 Plantio</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="manual_viveiro">Viveiro</label>
+                            <select id="manual_viveiro">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="manual_clone">Clone</label>
+                            <select id="manual_clone">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="manual_plantadas">Mudas Plantadas</label>
+                            <input type="number" id="manual_plantadas" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="manual_descarte">Descarte</label>
+                            <input type="number" id="manual_descarte" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="manual_total_mudas">Total de Mudas</label>
+                            <input type="number" id="manual_total_mudas" placeholder="0" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <div class="form-section-title">
+                        🧪 Insumos
+                        <button type="button" class="add-insumo-btn" onclick="addInsumoFieldManual()" style="float: right; background: var(--secondary); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            ➕ Adicionar Insumo
+                        </button>
+                    </div>
+                    <div id="insumos_container_manual">
+                        <div class="insumo-row" data-index="1">
+                            <div class="form-grid" style="grid-template-columns: 2fr 1fr auto; align-items: end;">
+                                <div class="form-group">
+                                    <label for="manual_insumo1">Insumo</label>
+                                    <select id="manual_insumo1">
+                                        <option value="">Selecione...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="manual_quantidade1">Quantidade</label>
+                                    <input type="number" id="manual_quantidade1" step="0.01" placeholder="0.00">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <button type="button" class="remove-insumo-btn" onclick="removeInsumoFieldManual(1)" style="background: var(--danger); color: white; border: none; padding: 12px 15px; border-radius: 8px; cursor: pointer; display: none;">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <div class="form-section-title">📝 Observações e Anexos</div>
+                    <div class="form-group">
+                        <label for="manual_observacao">Observação do Dia</label>
+                        <textarea id="manual_observacao" placeholder="Digite aqui suas observações sobre o trabalho realizado..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Anexos</label>
+                        <div class="file-upload" onclick="document.getElementById('manual_anexos').click()">
+                            <div class="file-upload-icon">📎</div>
+                            <div>Clique para adicionar fotos ou documentos</div>
+                            <input type="file" id="manual_anexos" multiple accept="image/*,.pdf" style="display: none;">
+                        </div>
+                        <div id="manual_files_preview"></div>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn">💾 Salvar Apontamento</button>
+            </form>
+        </div>
+
+        <!-- Operação Mecanizada Form -->
+        <div class="form-container" id="mecanizadaForm">
+            <div class="form-header">
+                <div class="form-title">🚜 Operação Mecanizada</div>
+                <button class="back-btn" onclick="showMainMenu()">← Voltar</button>
+            </div>
+
+            <form id="mecanizadaFormData">
+                <div class="form-card">
+                    <div class="form-section-title">📅 Informações Gerais</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="mecanizada_data">Data *</label>
+                            <input type="date" id="mecanizada_data" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="mecanizada_prefixo">Prefixo *</label>
+                            <select id="mecanizada_prefixo" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="mecanizada_operador">Operador *</label>
+                            <select id="mecanizada_operador" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="mecanizada_status">Status *</label>
+                            <select id="mecanizada_status" required>
+                                <option value="">Selecione...</option>
+                                <option value="Em Andamento">Em Andamento</option>
+                                <option value="Finalizado Parcial">Finalizado Parcial</option>
+                                <option value="Finalizado Total">Finalizado Total</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="mecanizada_servico">Serviço *</label>
+                            <select id="mecanizada_servico" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="mecanizada_codigo">Código</label>
+                            <input type="text" id="mecanizada_codigo" placeholder="Código do serviço">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <div class="form-section-title">🗺️ Localização</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="mecanizada_fazenda">Fazenda *</label>
+                            <select id="mecanizada_fazenda" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="mecanizada_talhao">Talhão *</label>
+                            <select id="mecanizada_talhao" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="mecanizada_produzido">Produzido *</label>
+                            <input type="number" id="mecanizada_produzido" step="0.01" placeholder="0.00" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="mecanizada_area_total">Área Total (ha)</label>
+                            <input type="number" id="mecanizada_area_total" step="0.01" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="mecanizada_restante">Restante (ha)</label>
+                            <input type="number" id="mecanizada_restante" step="0.01" readonly>
+                        </div>
+                    </div>
+                    
+                    <div id="estouro_alerta_mecanizada" style="display: none; background: #ff0000; color: white; padding: 15px; border-radius: 10px; text-align: center; font-weight: bold; font-size: 18px; margin-top: 20px; animation: pulse-red 1s infinite; box-shadow: 0 0 20px rgba(255,0,0,0.5);">
+                        ⚠️ ESTOURO DE TALHÃO ⚠️
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <div class="form-section-title">⏰ Horários</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="mecanizada_hora_inicio">Hora Início *</label>
+                            <input type="time" id="mecanizada_hora_inicio" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="mecanizada_hora_final">Hora Final *</label>
+                            <input type="time" id="mecanizada_hora_final" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <div class="form-section-title">
+                        🛑 Paradas
+                        <button type="button" class="add-parada-btn" onclick="addParadaFieldMecanizada()" style="float: right;">
+                            ➕ Adicionar Parada
+                        </button>
+                    </div>
+                    <div id="paradas_container_mecanizada">
+                        <div class="parada-row" data-index="1">
+                            <div class="form-group">
+                                <label for="mecanizada_parada_motivo1">Motivo da Parada</label>
+                                <select id="mecanizada_parada_motivo1">
+                                    <option value="">Selecione...</option>
+                                    <option value="Refeição">Refeição</option>
+                                    <option value="Manutenção">Manutenção</option>
+                                    <option value="Abastecimento">Abastecimento</option>
+                                    <option value="Chuva">Chuva</option>
+                                    <option value="Quebra">Quebra</option>
+                                    <option value="Falta de Insumo">Falta de Insumo</option>
+                                    <option value="Outros">Outros</option>
+                                </select>
+                            </div>
+                            <div class="form-grid" style="grid-template-columns: 1fr 1fr auto; align-items: end; margin-top: 10px;">
+                                <div class="form-group">
+                                    <label for="mecanizada_parada_inicio1">Hora Início</label>
+                                    <input type="time" id="mecanizada_parada_inicio1">
+                                </div>
+                                <div class="form-group">
+                                    <label for="mecanizada_parada_fim1">Hora Fim</label>
+                                    <input type="time" id="mecanizada_parada_fim1">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <button type="button" class="remove-parada-btn" onclick="removeParadaFieldMecanizada(1)" style="display: none;">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-card" id="mecanizada_plantio_section" style="display: none;">
+                    <div class="form-section-title">🌱 Plantio</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="mecanizada_viveiro">Viveiro</label>
+                            <select id="mecanizada_viveiro">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="mecanizada_clone">Clone</label>
+                            <select id="mecanizada_clone">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="mecanizada_plantadas">Mudas Plantadas</label>
+                            <input type="number" id="mecanizada_plantadas" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="mecanizada_descarte">Descarte</label>
+                            <input type="number" id="mecanizada_descarte" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="mecanizada_total_mudas">Total de Mudas</label>
+                            <input type="number" id="mecanizada_total_mudas" placeholder="0" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <div class="form-section-title">
+                        🧪 Insumos
+                        <button type="button" class="add-insumo-btn" onclick="addInsumoFieldMecanizada()" style="float: right; background: var(--secondary); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            ➕ Adicionar Insumo
+                        </button>
+                    </div>
+                    <div id="insumos_container_mecanizada">
+                        <div class="insumo-row" data-index="1">
+                            <div class="form-grid" style="grid-template-columns: 2fr 1fr auto; align-items: end;">
+                                <div class="form-group">
+                                    <label for="mecanizada_insumo1">Insumo</label>
+                                    <select id="mecanizada_insumo1">
+                                        <option value="">Selecione...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="mecanizada_quantidade1">Quantidade</label>
+                                    <input type="number" id="mecanizada_quantidade1" step="0.01" placeholder="0.00">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <button type="button" class="remove-insumo-btn" onclick="removeInsumoFieldMecanizada(1)" style="background: var(--danger); color: white; border: none; padding: 12px 15px; border-radius: 8px; cursor: pointer; display: none;">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <div class="form-section-title">📝 Observações e Anexos</div>
+                    <div class="form-group">
+                        <label for="mecanizada_observacao">Observação do Dia</label>
+                        <textarea id="mecanizada_observacao" placeholder="Digite aqui suas observações sobre o trabalho realizado..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Anexos</label>
+                        <div class="file-upload" onclick="document.getElementById('mecanizada_anexos').click()">
+                            <div class="file-upload-icon">📎</div>
+                            <div>Clique para adicionar fotos ou documentos</div>
+                            <input type="file" id="mecanizada_anexos" multiple accept="image/*,.pdf" style="display: none;">
+                        </div>
+                        <div id="mecanizada_files_preview"></div>
                     </div>
                 </div>
 

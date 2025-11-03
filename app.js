@@ -6,7 +6,24 @@ console.log('🌐 API_URL configurada para:', API_URL);
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js')
-            .then(reg => console.log('Service Worker registrado!'))
+            .then(reg => {
+                console.log('Service Worker registrado!');
+                
+                // Listener para mensagens do Service Worker
+                navigator.serviceWorker.addEventListener('message', event => {
+                    if (event.data.type === 'APP_UPDATED') {
+                        // Mostrar notificação de atualização
+                        if (confirm('🎉 App atualizado! Clique OK para recarregar e aplicar as melhorias.')) {
+                            // Limpar todo o cache e recarregar
+                            caches.keys().then(names => {
+                                names.forEach(name => caches.delete(name));
+                            }).then(() => {
+                                window.location.reload(true);
+                            });
+                        }
+                    }
+                });
+            })
             .catch(err => console.log('Erro ao registrar Service Worker:', err));
     });
 }
@@ -398,8 +415,9 @@ async function syncPendingApontamentos() {
 
 // Sincronização completa (cache + apontamentos)
 async function syncAll() {
-    // Desabilitado temporariamente - usando dados mockados
-    showToast('Modo demonstração - Dados mockados ativos', 'info');
+    // ✅ DADOS MOCKADOS ATIVOS - Sistema em modo demonstração
+    showToast('✅ Dados mockados carregados com sucesso!', 'success');
+    await initSampleData(); // Carregar dados de exemplo
     return;
     
     /* API sync desabilitado para demo
@@ -422,11 +440,13 @@ async function initSampleData() {
 
     const atividades = await getAllData('atividades');
     if (atividades.length === 0) {
+        // Serviços MANUAIS
         await addData('atividades', { codigo: 'PLT-001', nome: 'Plantio Manual', tarifa: 625.00, tipo: 'plantio' });
-        await addData('atividades', { codigo: 'PLT-002', nome: 'Plantio Mecanizado', tarifa: 840.00, tipo: 'plantio' });
-        await addData('atividades', { codigo: 'ADU-001', nome: 'Adubação', tarifa: 390.00, tipo: 'manutencao' });
-        await addData('atividades', { codigo: 'CAP-001', nome: 'Capina Manual', tarifa: 520.00, tipo: 'manutencao' });
-        await addData('atividades', { codigo: 'POD-001', nome: 'Poda', tarifa: 475.00, tipo: 'manutencao' });
+        await addData('atividades', { codigo: 'ADU-001', nome: 'Adubação Manual', tarifa: 390.00, tipo: 'manutencao' });
+        await addData('atividades', { codigo: 'ROC-001', nome: 'Roçada', tarifa: 450.00, tipo: 'manutencao' });
+        // Serviços MECANIZADOS
+        await addData('atividades', { codigo: 'HER-001', nome: 'Herbicida Mecanizado', tarifa: 580.00, tipo: 'manutencao' });
+        await addData('atividades', { codigo: 'ADU-002', nome: 'Adubação Mecanizada', tarifa: 720.00, tipo: 'manutencao' });
     }
 
     const fazendas = await getAllData('fazendas');
@@ -461,8 +481,6 @@ async function initSampleData() {
     if (frotas.length === 0) {
         await addData('frotas', { prefixo: 'FL-001', tipo: 'Trator' });
         await addData('frotas', { prefixo: 'FL-002', tipo: 'Caminhão' });
-        await addData('frotas', { prefixo: 'FL-003', tipo: 'Motosserra' });
-        await addData('frotas', { prefixo: 'FL-004', tipo: 'Pulverizador' });
     }
 
     // Adicionar viveiros
@@ -483,10 +501,12 @@ async function initSampleData() {
 
     const ordensServico = await getAllData('ordensServico');
     if (ordensServico.length === 0) {
+        // OS MANUAIS (sem prefixo de máquina)
         await addData('ordensServico', {
             numero: 'OS-2025-001',
-            prefixo: 'FL-001',
-            operador: 'João Silva',
+            tipo: 'manual',
+            prefixo: null,
+            operador: 'Equipe A',
             codigo: 'PLT-001',
             servico: 'Plantio Manual',
             fazenda: 'Fazenda São José',
@@ -496,10 +516,11 @@ async function initSampleData() {
         });
         await addData('ordensServico', {
             numero: 'OS-2025-002',
-            prefixo: 'FL-002',
-            operador: 'Maria Santos',
+            tipo: 'manual',
+            prefixo: null,
+            operador: 'Equipe B',
             codigo: 'ADU-001',
-            servico: 'Adubação',
+            servico: 'Adubação Manual',
             fazenda: 'Fazenda Boa Vista',
             talhao: '0001',
             areaTotal: 40.0,
@@ -507,24 +528,104 @@ async function initSampleData() {
         });
         await addData('ordensServico', {
             numero: 'OS-2025-003',
-            prefixo: 'FL-004',
-            operador: 'Pedro Oliveira',
-            codigo: 'CAP-001',
-            servico: 'Capina Manual',
+            tipo: 'manual',
+            prefixo: null,
+            operador: 'Equipe C',
+            codigo: 'ROC-001',
+            servico: 'Roçada',
             fazenda: 'Fazenda São José',
             talhao: '0002',
             areaTotal: 30.2,
             status: 'Pendente'
         });
+        
+        // OS MECANIZADAS (com prefixo de máquina)
         await addData('ordensServico', {
             numero: 'OS-2025-004',
-            prefixo: 'FL-003',
+            tipo: 'mecanizado',
+            prefixo: 'FL-001',
             operador: 'João Silva',
-            codigo: 'POD-001',
-            servico: 'Poda',
+            codigo: 'HER-001',
+            servico: 'Herbicida Mecanizado',
             fazenda: 'Fazenda Boa Vista',
             talhao: '0002',
             areaTotal: 35.8,
+            status: 'Pendente'
+        });
+        await addData('ordensServico', {
+            numero: 'OS-2025-005',
+            tipo: 'mecanizado',
+            prefixo: 'FL-002',
+            operador: 'Maria Santos',
+            codigo: 'ADU-002',
+            servico: 'Adubação Mecanizada',
+            fazenda: 'Fazenda São José',
+            talhao: '0003',
+            areaTotal: 18.7,
+            status: 'Pendente'
+        });
+        
+        // Mais OS MANUAIS
+        await addData('ordensServico', {
+            numero: 'OS-2025-006',
+            tipo: 'manual',
+            prefixo: null,
+            operador: 'Equipe D',
+            codigo: 'PLT-001',
+            servico: 'Plantio Manual',
+            fazenda: 'Fazenda Boa Vista',
+            talhao: '0002',
+            areaTotal: 35.8,
+            status: 'Pendente'
+        });
+        await addData('ordensServico', {
+            numero: 'OS-2025-007',
+            tipo: 'manual',
+            prefixo: null,
+            operador: 'Equipe A',
+            codigo: 'ROC-001',
+            servico: 'Roçada',
+            fazenda: 'Fazenda Boa Vista',
+            talhao: '0001',
+            areaTotal: 40.0,
+            status: 'Pendente'
+        });
+        
+        // Mais OS MECANIZADAS
+        await addData('ordensServico', {
+            numero: 'OS-2025-008',
+            tipo: 'mecanizado',
+            prefixo: 'FL-001',
+            operador: 'Pedro Oliveira',
+            codigo: 'HER-001',
+            servico: 'Herbicida Mecanizado',
+            fazenda: 'Fazenda São José',
+            talhao: '0001',
+            areaTotal: 25.5,
+            status: 'Pendente'
+        });
+        await addData('ordensServico', {
+            numero: 'OS-2025-009',
+            tipo: 'mecanizado',
+            prefixo: 'FL-002',
+            operador: 'João Silva',
+            codigo: 'ADU-002',
+            servico: 'Adubação Mecanizada',
+            fazenda: 'Fazenda Boa Vista',
+            talhao: '0002',
+            areaTotal: 35.8,
+            status: 'Pendente'
+        });
+        await addData('ordensServico', {
+            numero: 'OS-2025-010',
+            tipo: 'mecanizado',
+            prefixo: 'FL-001',
+            operador: 'Maria Santos',
+            codigo: 'HER-001',
+            servico: 'Herbicida Mecanizado',
+            fazenda: 'Fazenda São José',
+            talhao: '0002',
+            areaTotal: 30.2,
             status: 'Pendente'
         });
     }
@@ -847,9 +948,9 @@ function getWeatherIcon(code) {
 
 // Load dropdown options
 async function loadDropdowns() {
-    // Carregar operadores
+    // Carregar operadores - TODOS OS FORMULÁRIOS
     const colaboradores = await getAllData('colaboradores');
-    const operadorSelects = document.querySelectorAll('#avulso_operador');
+    const operadorSelects = document.querySelectorAll('#avulso_operador, #manual_operador, #mecanizada_operador, #plan_operador');
     operadorSelects.forEach(select => {
         select.innerHTML = '<option value="">Selecione...</option>';
         colaboradores.forEach(col => {
@@ -860,9 +961,9 @@ async function loadDropdowns() {
         });
     });
 
-    // Carregar prefixos (frotas)
+    // Carregar prefixos (frotas) - TODOS OS FORMULÁRIOS
     const frotas = await getAllData('frotas');
-    const prefixoSelects = document.querySelectorAll('#avulso_prefixo');
+    const prefixoSelects = document.querySelectorAll('#avulso_prefixo, #manual_prefixo, #mecanizada_prefixo, #plan_prefixo');
     prefixoSelects.forEach(select => {
         select.innerHTML = '<option value="">Selecione...</option>';
         frotas.forEach(frota => {
@@ -873,9 +974,9 @@ async function loadDropdowns() {
         });
     });
 
-    // Carregar serviços
+    // Carregar serviços - TODOS OS FORMULÁRIOS
     const atividades = await getAllData('atividades');
-    const servicoSelects = document.querySelectorAll('#avulso_servico');
+    const servicoSelects = document.querySelectorAll('#avulso_servico, #manual_servico, #mecanizada_servico, #plan_servico');
     servicoSelects.forEach(select => {
         select.innerHTML = '<option value="">Selecione...</option>';
         atividades.forEach(atv => {
@@ -888,9 +989,9 @@ async function loadDropdowns() {
         });
     });
 
-    // Carregar fazendas
+    // Carregar fazendas - TODOS OS FORMULÁRIOS
     const fazendas = await getAllData('fazendas');
-    const fazendaSelects = document.querySelectorAll('#avulso_fazenda');
+    const fazendaSelects = document.querySelectorAll('#avulso_fazenda, #manual_fazenda, #mecanizada_fazenda, #plan_fazenda');
     fazendaSelects.forEach(select => {
         select.innerHTML = '<option value="">Selecione...</option>';
         fazendas.forEach(faz => {
@@ -902,9 +1003,9 @@ async function loadDropdowns() {
         });
     });
 
-    // Carregar insumos (sem unidade)
+    // Carregar insumos (sem unidade) - TODOS OS FORMULÁRIOS
     const insumos = await getAllData('insumos');
-    const insumoSelects = document.querySelectorAll('[id^="avulso_insumo"], [id^="plan_insumo"]');
+    const insumoSelects = document.querySelectorAll('[id^="avulso_insumo"], [id^="manual_insumo"], [id^="mecanizada_insumo"], [id^="plan_insumo"]');
     insumoSelects.forEach(select => {
         select.innerHTML = '<option value="">Selecione...</option>';
         insumos.forEach(ins => {
@@ -915,9 +1016,9 @@ async function loadDropdowns() {
         });
     });
 
-    // Carregar paradas cadastradas
+    // Carregar paradas cadastradas - TODOS OS FORMULÁRIOS
     const paradas = await getAllData('paradas');
-    const paradaSelects = document.querySelectorAll('[id^="avulso_parada_motivo"], [id^="plan_parada_motivo"]');
+    const paradaSelects = document.querySelectorAll('[id^="avulso_parada_motivo"], [id^="manual_parada_motivo"], [id^="mecanizada_parada_motivo"], [id^="plan_parada_motivo"]');
     paradaSelects.forEach(select => {
         select.innerHTML = '<option value="">Selecione...</option>';
         paradas.forEach(parada => {
@@ -928,9 +1029,9 @@ async function loadDropdowns() {
         });
     });
 
-    // Carregar viveiros
+    // Carregar viveiros - TODOS OS FORMULÁRIOS
     const viveiros = await getAllData('viveiros');
-    const viveiroSelects = document.querySelectorAll('#avulso_viveiro, #plan_viveiro');
+    const viveiroSelects = document.querySelectorAll('#avulso_viveiro, #manual_viveiro, #mecanizada_viveiro, #plan_viveiro');
     viveiroSelects.forEach(select => {
         select.innerHTML = '<option value="">Selecione...</option>';
         viveiros.forEach(viv => {
@@ -941,9 +1042,9 @@ async function loadDropdowns() {
         });
     });
 
-    // Carregar clones
+    // Carregar clones - TODOS OS FORMULÁRIOS
     const clones = await getAllData('clones');
-    const cloneSelects = document.querySelectorAll('#avulso_clone, #plan_clone');
+    const cloneSelects = document.querySelectorAll('#avulso_clone, #manual_clone, #mecanizada_clone, #plan_clone');
     cloneSelects.forEach(select => {
         select.innerHTML = '<option value="">Selecione...</option>';
         clones.forEach(clone => {
@@ -968,7 +1069,7 @@ async function loadDropdowns() {
     }
 }
 
-// Load fazenda talhoes
+// Load fazenda talhoes - AVULSO
 document.getElementById('avulso_fazenda')?.addEventListener('change', async function() {
     const fazendaId = this.selectedOptions[0]?.dataset.id;
     if (fazendaId) {
@@ -988,11 +1089,65 @@ document.getElementById('avulso_fazenda')?.addEventListener('change', async func
     }
 });
 
+// Load fazenda talhoes - MANUAL
+document.getElementById('manual_fazenda')?.addEventListener('change', async function() {
+    const fazendaId = this.selectedOptions[0]?.dataset.id;
+    if (fazendaId) {
+        const fazenda = await getData('fazendas', parseInt(fazendaId));
+        const talhaoSelect = document.getElementById('manual_talhao');
+        talhaoSelect.innerHTML = '<option value="">Selecione...</option>';
+        
+        if (fazenda && fazenda.talhoes) {
+            fazenda.talhoes.forEach(talhao => {
+                const option = document.createElement('option');
+                option.value = talhao.codigo;
+                option.textContent = talhao.codigo;
+                option.dataset.area = talhao.area;
+                talhaoSelect.appendChild(option);
+            });
+        }
+    }
+});
+
+// Load fazenda talhoes - MECANIZADA
+document.getElementById('mecanizada_fazenda')?.addEventListener('change', async function() {
+    const fazendaId = this.selectedOptions[0]?.dataset.id;
+    if (fazendaId) {
+        const fazenda = await getData('fazendas', parseInt(fazendaId));
+        const talhaoSelect = document.getElementById('mecanizada_talhao');
+        talhaoSelect.innerHTML = '<option value="">Selecione...</option>';
+        
+        if (fazenda && fazenda.talhoes) {
+            fazenda.talhoes.forEach(talhao => {
+                const option = document.createElement('option');
+                option.value = talhao.codigo;
+                option.textContent = talhao.codigo;
+                option.dataset.area = talhao.area;
+                talhaoSelect.appendChild(option);
+            });
+        }
+    }
+});
+
 // Load talhao area
 document.getElementById('avulso_talhao')?.addEventListener('change', function() {
     const area = this.selectedOptions[0]?.dataset.area;
     if (area) {
         document.getElementById('avulso_area_total').value = area;
+    }
+});
+
+document.getElementById('manual_talhao')?.addEventListener('change', function() {
+    const area = this.selectedOptions[0]?.dataset.area;
+    if (area) {
+        document.getElementById('manual_area_total').value = area;
+    }
+});
+
+document.getElementById('mecanizada_talhao')?.addEventListener('change', function() {
+    const area = this.selectedOptions[0]?.dataset.area;
+    if (area) {
+        document.getElementById('mecanizada_area_total').value = area;
     }
 });
 
@@ -1027,6 +1182,23 @@ document.getElementById('avulso_servico')?.addEventListener('change', function()
         plantioSection.style.display = 'block';
     } else {
         plantioSection.style.display = 'none';
+    }
+});
+
+// MANUAL - Auto-preencher código do serviço e controlar seção de plantio
+document.getElementById('manual_servico')?.addEventListener('change', function() {
+    const selectedOption = this.selectedOptions[0];
+    const codigo = selectedOption?.dataset.codigo;
+    const tipo = selectedOption?.dataset.tipo;
+    
+    if (codigo) {
+        document.getElementById('manual_codigo').value = codigo;
+    }
+    
+    // Mostrar/esconder seção de plantio
+    const plantioSection = document.getElementById('manual_plantio_section');
+    if (plantioSection) {
+        plantioSection.style.display = tipo === 'plantio' ? 'block' : 'none';
     }
 });
 
@@ -1180,7 +1352,133 @@ function removeInsumoFieldPlan(index) {
     }
 }
 
+// Gerenciar insumos dinâmicos MANUAL
+let insumoCountManual = 1;
 
+async function addInsumoFieldManual() {
+    insumoCountManual++;
+    const container = document.getElementById('insumos_container_manual');
+    const insumos = await getAllData('insumos');
+    
+    const newRow = document.createElement('div');
+    newRow.className = 'insumo-row';
+    newRow.dataset.index = insumoCountManual;
+    
+    let insumosOptions = '<option value="">Selecione...</option>';
+    insumos.forEach(ins => {
+        insumosOptions += `<option value="${ins.nome}">${ins.nome}</option>`;
+    });
+    
+    newRow.innerHTML = `
+        <div class="form-grid" style="grid-template-columns: 2fr 1fr auto; align-items: end;">
+            <div class="form-group">
+                <label for="manual_insumo${insumoCountManual}">Insumo</label>
+                <select id="manual_insumo${insumoCountManual}">
+                    ${insumosOptions}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="manual_quantidade${insumoCountManual}">Quantidade</label>
+                <input type="number" id="manual_quantidade${insumoCountManual}" step="0.01" placeholder="0.00">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <button type="button" class="remove-insumo-btn" onclick="removeInsumoFieldManual(${insumoCountManual})" style="background: var(--danger); color: white; border: none; padding: 12px 15px; border-radius: 8px; cursor: pointer;">
+                    🗑️
+                </button>
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(newRow);
+    
+    // Mostrar botão de remover do primeiro item se houver mais de 1
+    if (insumoCountManual > 1) {
+        const firstRemoveBtn = document.querySelector('#insumos_container_manual .insumo-row[data-index="1"] .remove-insumo-btn');
+        if (firstRemoveBtn) {
+            firstRemoveBtn.style.display = 'inline-block';
+        }
+    }
+}
+
+function removeInsumoFieldManual(index) {
+    const row = document.querySelector(`#insumos_container_manual .insumo-row[data-index="${index}"]`);
+    if (row) {
+        row.remove();
+    }
+    
+    // Se sobrar apenas 1, esconder o botão de remover
+    const remainingRows = document.querySelectorAll('#insumos_container_manual .insumo-row');
+    if (remainingRows.length === 1) {
+        const firstRemoveBtn = document.querySelector('#insumos_container_manual .insumo-row .remove-insumo-btn');
+        if (firstRemoveBtn) {
+            firstRemoveBtn.style.display = 'none';
+        }
+    }
+}
+
+// Gerenciar insumos dinâmicos MECANIZADA
+let insumoCountMecanizada = 1;
+
+async function addInsumoFieldMecanizada() {
+    insumoCountMecanizada++;
+    const container = document.getElementById('insumos_container_mecanizada');
+    const insumos = await getAllData('insumos');
+    
+    const newRow = document.createElement('div');
+    newRow.className = 'insumo-row';
+    newRow.dataset.index = insumoCountMecanizada;
+    
+    let insumosOptions = '<option value="">Selecione...</option>';
+    insumos.forEach(ins => {
+        insumosOptions += `<option value="${ins.nome}">${ins.nome}</option>`;
+    });
+    
+    newRow.innerHTML = `
+        <div class="form-grid" style="grid-template-columns: 2fr 1fr auto; align-items: end;">
+            <div class="form-group">
+                <label for="mecanizada_insumo${insumoCountMecanizada}">Insumo</label>
+                <select id="mecanizada_insumo${insumoCountMecanizada}">
+                    ${insumosOptions}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="mecanizada_quantidade${insumoCountMecanizada}">Quantidade</label>
+                <input type="number" id="mecanizada_quantidade${insumoCountMecanizada}" step="0.01" placeholder="0.00">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <button type="button" class="remove-insumo-btn" onclick="removeInsumoFieldMecanizada(${insumoCountMecanizada})" style="background: var(--danger); color: white; border: none; padding: 12px 15px; border-radius: 8px; cursor: pointer;">
+                    🗑️
+                </button>
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(newRow);
+    
+    // Mostrar botão de remover do primeiro item se houver mais de 1
+    if (insumoCountMecanizada > 1) {
+        const firstRemoveBtn = document.querySelector('#insumos_container_mecanizada .insumo-row[data-index="1"] .remove-insumo-btn');
+        if (firstRemoveBtn) {
+            firstRemoveBtn.style.display = 'inline-block';
+        }
+    }
+}
+
+function removeInsumoFieldMecanizada(index) {
+    const row = document.querySelector(`#insumos_container_mecanizada .insumo-row[data-index="${index}"]`);
+    if (row) {
+        row.remove();
+    }
+    
+    // Se sobrar apenas 1, esconder o botão de remover
+    const remainingRows = document.querySelectorAll('#insumos_container_mecanizada .insumo-row');
+    if (remainingRows.length === 1) {
+        const firstRemoveBtn = document.querySelector('#insumos_container_mecanizada .insumo-row .remove-insumo-btn');
+        if (firstRemoveBtn) {
+            firstRemoveBtn.style.display = 'none';
+        }
+    }
+}
 
 // Calculate planejado restante e verificar estouro
 document.getElementById('plan_produzido')?.addEventListener('input', function() {
@@ -1237,6 +1535,8 @@ async function logout() {
 function showMainMenu() {
     document.getElementById('mainMenu').style.display = 'block';
     document.getElementById('avulsoForm').classList.remove('active');
+    document.getElementById('manualForm').classList.remove('active');
+    document.getElementById('mecanizadaForm').classList.remove('active');
     document.getElementById('buscaOSScreen').classList.remove('active');
     document.getElementById('planejadoForm').classList.remove('active');
     document.getElementById('relatorioTable').classList.remove('active');
@@ -1248,26 +1548,67 @@ function showAvulsoForm() {
     document.getElementById('avulso_data').valueAsDate = new Date();
 }
 
+// Mostrar formulário de Operação Manual
+function showManualForm() {
+    document.getElementById('mainMenu').style.display = 'none';
+    document.getElementById('manualForm').classList.add('active');
+    document.getElementById('manual_data').valueAsDate = new Date();
+}
+
+// Mostrar formulário de Operação Mecanizada
+function showMecanizadaForm() {
+    document.getElementById('mainMenu').style.display = 'none';
+    document.getElementById('mecanizadaForm').classList.add('active');
+    document.getElementById('mecanizada_data').valueAsDate = new Date();
+}
+
 // Mostrar tela de busca de OS (Tela 1)
-function showPlaneadoForm() {
+function showPlaneadoManualForm() {
     document.getElementById('mainMenu').style.display = 'none';
     document.getElementById('buscaOSScreen').classList.add('active');
     document.getElementById('planejadoForm').classList.remove('active');
     
+    // Definir tipo de OS para filtrar
+    window.tipoOSAtual = 'manual';
+    
     // Carregar lista de OS no select da tela de busca
-    loadOrdemServicoSelect();
+    loadOrdemServicoSelect('manual');
+}
+
+function showPlaneadoMecanizadoForm() {
+    document.getElementById('mainMenu').style.display = 'none';
+    document.getElementById('buscaOSScreen').classList.add('active');
+    document.getElementById('planejadoForm').classList.remove('active');
+    
+    // Definir tipo de OS para filtrar
+    window.tipoOSAtual = 'mecanizado';
+    
+    // Carregar lista de OS no select da tela de busca
+    loadOrdemServicoSelect('mecanizado');
+}
+
+// Função antiga mantida para compatibilidade
+function showPlaneadoForm() {
+    showPlaneadoManualForm();
 }
 
 // Carregar lista de OS no select de busca
-async function loadOrdemServicoSelect() {
+async function loadOrdemServicoSelect(tipoFiltro = null) {
     const select = document.getElementById('busca_ordem_servico');
     select.innerHTML = '<option value="">Selecione uma OS...</option>';
     
     const ordens = await getAllData('ordensServico');
-    ordens.forEach(os => {
+    
+    // Filtrar ordens por tipo se especificado
+    const ordensFiltradas = tipoFiltro 
+        ? ordens.filter(os => os.tipo === tipoFiltro)
+        : ordens;
+    
+    ordensFiltradas.forEach(os => {
         const option = document.createElement('option');
         option.value = os.id;
-        option.textContent = `OS ${os.id} - ${os.prefixo} - ${os.operador} - ${os.fazenda}/${os.talhao}`;
+        const tipoLabel = os.tipo === 'manual' ? '👷 Manual' : '🚜 Mecanizado';
+        option.textContent = `${tipoLabel} | OS ${os.id} - ${os.prefixo || 'S/P'} - ${os.operador} - ${os.fazenda}/${os.talhao}`;
         select.appendChild(option);
     });
 }
@@ -1319,12 +1660,6 @@ async function selecionarOS() {
         plantioSection.style.display = 'block';
     } else {
         plantioSection.style.display = 'none';
-    }
-    
-    // Abrir modal de horímetro quando o prefixo for preenchido
-    if (os.prefixo) {
-        tipoFormularioAtual = 'planejado';
-        setTimeout(() => abrirHorimetroModal(), 500); // Pequeno delay para a transição de tela
     }
     
     showToast('OS carregada com sucesso! Preencha os campos necessários.', 'success');
@@ -2240,6 +2575,14 @@ let horimetroData = {
 document.getElementById('avulso_prefixo')?.addEventListener('change', function() {
     if (this.value) {
         tipoFormularioAtual = 'avulso';
+        abrirHorimetroModal();
+    }
+});
+
+// Abrir modal de horímetro ao selecionar prefixo - MECANIZADA
+document.getElementById('mecanizada_prefixo')?.addEventListener('change', function() {
+    if (this.value) {
+        tipoFormularioAtual = 'mecanizada';
         abrirHorimetroModal();
     }
 });

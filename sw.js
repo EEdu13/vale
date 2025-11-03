@@ -1,4 +1,4 @@
-const CACHE_NAME = 'silvacollect-v1';
+const CACHE_NAME = 'silvacollect-v2';
 const urlsToCache = [
     '/',
     '/index.html',
@@ -34,8 +34,20 @@ self.addEventListener('activate', event => {
                     }
                 })
             );
+        }).then(() => {
+            // Notificar todos os clientes sobre a atualização
+            return self.clients.matchAll().then(clients => {
+                clients.forEach(client => {
+                    client.postMessage({
+                        type: 'APP_UPDATED',
+                        version: CACHE_NAME
+                    });
+                });
+            });
         })
     );
+    // Força o novo Service Worker a assumir imediatamente
+    return self.clients.claim();
 });
 
 // Fetch Strategy: Network First, fallback to Cache
